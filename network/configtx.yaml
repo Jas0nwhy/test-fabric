@@ -1,0 +1,152 @@
+Organizations:
+  #中央机构
+  - &Orderer
+    Name: Orderer
+    ID: OrdererMSP
+    MSPDir: crypto-config/ordererOrganizations/perchain.com/msp
+    Policies: &OrdererPolicies
+      Readers:
+        Type: Signature
+        Rule: "OR('OrdererMSP.member')"
+      Writers:
+        Type: Signature
+        Rule: "OR('OrdererMSP.member')"
+      Admins:
+        Type: Signature
+        Rule: "OR('OrdererMSP.admin')"
+
+
+  - &CO
+    Name: CO
+    ID: COMSP
+    MSPDir: crypto-config/peerOrganizations/co.perchain.com/msp
+    Policies: &COPolicies
+      Readers:
+        Type: Signature
+        Rule: "OR('COMSP.member')"
+      Writers:
+        Type: Signature
+        Rule: "OR('COMSP.member')"
+      Admins:
+        Type: Signature
+        Rule: "OR('COMSP.admin', 'OrdererMSP.admin')"
+    AnchorPeers: # 组织锚节点的配置
+      - Host: peer0.co.perchain.com
+        Port: 7051
+
+  - &SO
+    Name: SO
+    ID: SOMSP
+    MSPDir: crypto-config/peerOrganizations/so.perchain.com/msp
+    Policies: &SOPolicies
+      Readers:
+        Type: Signature
+        Rule: "OR('SOMSP.member')"
+      Writers:
+        Type: Signature
+        Rule: "OR('SOMSP.member')"
+      Admins:
+        Type: Signature
+        Rule: "OR('SOMSP.admin', 'OrdererMSP.admin')"
+    AnchorPeers: # 组织锚节点的配置
+      - Host: peer0.so.perchain.com
+        Port: 7051
+
+  - &AO
+    Name: AO
+    ID: AOMSP
+    MSPDir: crypto-config/peerOrganizations/ao.perchain.com/msp
+    Policies: &AOPolicies
+      Readers:
+        Type: Signature
+        Rule: "OR('AOMSP.member')"
+      Writers:
+        Type: Signature
+        Rule: "OR('AOMSP.member')"
+      Admins:
+        Type: Signature
+        Rule: "OR('AOMSP.admin', 'OrdererMSP.admin')"
+    AnchorPeers: # 组织锚节点的配置
+      - Host: peer0.ao.perchain.com
+        Port: 7051
+
+
+# 定义了排序服务的相关参数，这些参数将用于创建创世区块
+Orderer: &OrdererDefaults
+  # 排序节点类型用来指定要启用的排序节点实现，不同的实现对应不同的共识算法
+  OrdererType: solo # 共识机制
+  Addresses: # Orderer 的域名（用于连接）
+    - orderer.perchain.com:7050
+  BatchTimeout: 2s # 出块时间间隔
+  BatchSize: # 用于控制每个block的信息量
+    MaxMessageCount: 10 #每个区块的消息个数
+    AbsoluteMaxBytes: 99 MB #每个区块最大的信息大小
+    PreferredMaxBytes: 512 KB #每个区块包含的一条信息最大长度
+  Organizations:
+
+# 定义Peer组织如何与应用程序通道交互的策略
+# 默认策略：所有Peer组织都将能够读取数据并将数据写入账本
+Application: &ApplicationDefaults
+  Organizations:
+  Policies:
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+    # BlockValidation specifies what signatures must be included in the block
+    # from the orderer for the peer to validate it.
+    BlockValidation:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+
+
+# 用来定义用于 configtxgen 工具的配置入口
+Profiles:
+  ThreeOrgsOrdererGenesis:
+#    <<: *ChannelDefaults
+    Orderer:
+      <<: *OrdererDefaults
+      Organizations:
+        - *Orderer
+    Consortiums:
+      SampleConsortium:
+        Organizations:
+          - *CO
+          - *SO
+          - *AO
+
+  ThreeOrgsChannel:
+    Consortium: SampleConsortium
+    Application:
+      <<: *ApplicationDefaults
+      Organizations:
+        - *CO
+        - *SO
+        - *AO
+
+Channel:
+  Policies:
+    # Who may invoke the 'Deliver' API
+    Readers:
+      Type: ImplicitMeta
+      Rule: "ANY Readers"
+    # Who may invoke the 'Broadcast' API
+    Writers:
+      Type: ImplicitMeta
+      Rule: "ANY Writers"
+    # By default, who may modify elements at this config level
+    Admins:
+      Type: ImplicitMeta
+      Rule: "MAJORITY Admins"
+  Consortium: SampleConsortium
+  Application:
+    <<: *ApplicationDefaults
+    Organizations:
+      - *CO
+      - *SO
+      - *AO

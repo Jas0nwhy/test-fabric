@@ -1,0 +1,273 @@
+version: '2.1'
+
+volumes:
+  orderer.perchain.com:
+  peer0.co.perchain.com:
+  peer1.co.perchain.com:
+  peer0.so.perchain.com:
+  peer1.so.perchain.com:
+  peer0.ao.perchain.com:
+  peer1.ao.perchain.com:
+  couchdb0.co.perchain.com:
+  couchdb0.so.perchain.com:
+  couchdb0.ao.perchain.com:
+  couchdb1.co.perchain.com:
+  couchdb1.so.perchain.com:
+  couchdb1.ao.perchain.com:
+
+networks:
+  perchain_network:
+    name: perchain_network
+
+services:
+  orderer.perchain.com:
+    container_name: orderer.perchain.com
+    image: hyperledger/fabric-orderer:1.4.12
+    environment:
+      - GODEBUG=netdns=go
+      - ORDERER_GENERAL_LISTENADDRESS=0.0.0.0
+      - ORDERER_GENERAL_GENESISMETHOD=file
+      - ORDERER_GENERAL_GENESISFILE=/etc/hyperledger/config/genesis.block # 注入创世区块
+      - ORDERER_GENERAL_LOCALMSPID=OrdererMSP
+      - ORDERER_GENERAL_LOCALMSPDIR=/etc/hyperledger/orderer/msp # 证书相关
+    command: orderer
+    ports:
+      - "7050:7050"
+    volumes: # 挂载由cryptogen和configtxgen生成的证书文件以及创世区块
+      - ./config/genesis.block:/etc/hyperledger/config/genesis.block
+      - ./crypto-config/ordererOrganizations/perchain.com/orderers/orderer.perchain.com/:/etc/hyperledger/orderer
+      - orderer.perchain.com:/var/hyperledger/production/orderer
+    networks:
+      - perchain_network
+
+  couchdb0.co.perchain.com:
+    container_name: couchdb0.co.perchain.com
+    image: hyperledger/fabric-couchdb
+    environment:
+      - COUCHDB_USER=admin
+      - COUCHDB_PASSWORD=adminpw
+    ports:
+      - 5984:5984
+    networks:
+      - perchain_network
+
+  peer0.co.perchain.com:
+    extends:
+      file: docker-compose-base.yaml
+      service: peer-base
+    container_name: peer0.co.perchain.com
+    environment:
+      - CORE_PEER_ID=peer0.co.perchain.com
+      - CORE_PEER_LOCALMSPID=COMSP
+      - CORE_PEER_ADDRESS=peer0.co.perchain.com:7051
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb0.co.perchain.com:5984
+    ports:
+      - "7051:7051" # grpc服务端口
+      - "7053:7053" # eventhub端口
+    volumes:
+      - ./crypto-config/peerOrganizations/co.perchain.com/peers/peer0.co.perchain.com:/etc/hyperledger/peer
+      - peer0.co.perchain.com:/var/hyperledger/production
+    depends_on:
+      - orderer.perchain.com
+      - couchdb0.co.perchain.com
+
+  couchdb1.co.perchain.com:
+    container_name: couchdb1.co.perchain.com
+    image: hyperledger/fabric-couchdb
+    environment:
+      - COUCHDB_USER=admin
+      - COUCHDB_PASSWORD=adminpw
+    ports:
+      - 15984:5984
+    networks:
+      - perchain_network
+
+  peer1.co.perchain.com:
+    extends:
+      file: docker-compose-base.yaml
+      service: peer-base
+    container_name: peer1.co.perchain.com
+    environment:
+      - CORE_PEER_ID=peer1.co.perchain.com
+      - CORE_PEER_LOCALMSPID=COMSP
+      - CORE_PEER_ADDRESS=peer1.co.perchain.com:7051
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb1.co.perchain.com:5984
+    ports:
+      - "17051:7051" # grpc服务端口
+      - "17053:7053" # eventhub端口
+    volumes:
+      - ./crypto-config/peerOrganizations/co.perchain.com/peers/peer1.co.perchain.com:/etc/hyperledger/peer
+      - peer1.co.perchain.com:/var/hyperledger/production
+    depends_on:
+      - orderer.perchain.com
+      - couchdb1.co.perchain.com
+
+  couchdb0.so.perchain.com:
+    container_name: couchdb0.so.perchain.com
+    image: hyperledger/fabric-couchdb
+    environment:
+      - COUCHDB_USER=admin
+      - COUCHDB_PASSWORD=adminpw
+    ports:
+      - 25984:5984
+    networks:
+      - perchain_network
+
+  peer0.so.perchain.com:
+    extends:
+      file: docker-compose-base.yaml
+      service: peer-base
+    container_name: peer0.so.perchain.com
+    environment:
+      - CORE_PEER_ID=peer0.so.perchain.com
+      - CORE_PEER_LOCALMSPID=SOMSP
+      - CORE_PEER_ADDRESS=peer0.so.perchain.com:7051
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb0.so.perchain.com:5984
+    ports:
+      - "27051:7051" # grpc服务端口
+      - "27053:7053" # eventhub端口
+    volumes:
+      - ./crypto-config/peerOrganizations/so.perchain.com/peers/peer0.so.perchain.com:/etc/hyperledger/peer
+      - peer0.so.perchain.com:/var/hyperledger/production
+    depends_on:
+      - orderer.perchain.com
+      - couchdb0.so.perchain.com
+
+  couchdb1.so.perchain.com:
+    container_name: couchdb1.so.perchain.com
+    image: hyperledger/fabric-couchdb
+    environment:
+      - COUCHDB_USER=admin
+      - COUCHDB_PASSWORD=adminpw
+    ports:
+      - 35984:5984
+    networks:
+      - perchain_network
+
+  peer1.so.perchain.com:
+    extends:
+      file: docker-compose-base.yaml
+      service: peer-base
+    container_name: peer1.so.perchain.com
+    environment:
+      - CORE_PEER_ID=peer1.so.perchain.com
+      - CORE_PEER_LOCALMSPID=SOMSP
+      - CORE_PEER_ADDRESS=peer1.so.perchain.com:7051
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb1.so.perchain.com:5984
+    ports:
+      - "37051:7051" # grpc服务端口
+      - "37053:7053" # eventhub端口
+    volumes:
+      - ./crypto-config/peerOrganizations/so.perchain.com/peers/peer1.so.perchain.com:/etc/hyperledger/peer
+      - peer1.so.perchain.com:/var/hyperledger/production
+    depends_on:
+      - orderer.perchain.com
+      - couchdb1.so.perchain.com
+
+  couchdb0.ao.perchain.com:
+    container_name: couchdb0.ao.perchain.com
+    image: hyperledger/fabric-couchdb
+    environment:
+      - COUCHDB_USER=admin
+      - COUCHDB_PASSWORD=adminpw
+    ports:
+      - 45984:5984
+    networks:
+      - perchain_network
+
+  peer0.ao.perchain.com:
+#    extends:
+#      file: docker-compose-base.yaml
+#      service: peer-base
+    image: hyperledger/fabric-peer:1.4.12
+    container_name: peer0.ao.perchain.com
+    environment:
+      - CORE_PEER_ID=peer0.ao.perchain.com
+      - CORE_PEER_LOCALMSPID=AOMSP
+      - CORE_PEER_ADDRESS=peer0.ao.perchain.com:7051
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb0.ao.perchain.com:5984
+      #base文件
+      - GODEBUG=netdns=go
+      - CORE_VM_ENDPOINT=unix:///host/var/run/docker.sock
+      - CORE_LOGGING_PEER=info
+      - CORE_CHAINCODE_LOGGING_LEVEL=INFO
+      - CORE_PEER_MSPCONFIGPATH=/etc/hyperledger/peer/msp # msp证书（节点证书）
+      - CORE_LEDGER_STATE_STATEDATABASE=CouchDB # 状态数据库的存储引擎（or CouchDB）
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_USERNAME=admin
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_PASSWORD=adminpw
+      - CORE_VM_DOCKER_HOSTCONFIG_NETWORKMODE=perchain_network # docker 网络
+    ports:
+      - "47051:7051" # grpc服务端口
+      - "47053:7053" # eventhub端口
+    volumes:
+      - ./crypto-config/peerOrganizations/so.perchain.com/peers/peer0.so.perchain.com:/etc/hyperledger/peer
+      - peer0.so.perchain.com:/var/hyperledger/production
+      #base文件
+      - /var/run/docker.sock:/host/var/run/docker.sock
+    working_dir: /opt/gopath/src/github.com/hyperledger/fabric
+    command: peer node start
+    networks:
+      - perchain_network
+    depends_on:
+      - orderer.perchain.com
+      - couchdb0.ao.perchain.com
+
+  couchdb1.ao.perchain.com:
+    container_name: couchdb1.ao.perchain.com
+    image: hyperledger/fabric-couchdb
+    environment:
+      - COUCHDB_USER=admin
+      - COUCHDB_PASSWORD=adminpw
+    ports:
+      - 55984:5984
+    networks:
+      - perchain_network
+
+  peer1.ao.perchain.com:
+    extends:
+      file: docker-compose-base.yaml
+      service: peer-base
+    container_name: peer1.ao.perchain.com
+    environment:
+      - CORE_PEER_ID=peer1.ao.perchain.com
+      - CORE_PEER_LOCALMSPID=AOMSP
+      - CORE_PEER_ADDRESS=peer1.ao.perchain.com:7051
+      - CORE_LEDGER_STATE_COUCHDBCONFIG_COUCHDBADDRESS=couchdb1.ao.perchain.com:5984
+    ports:
+      - "57051:7051" # grpc服务端口
+      - "57053:7053" # eventhub端口
+    volumes:
+      - ./crypto-config/peerOrganizations/ao.perchain.com/peers/peer1.ao.perchain.com:/etc/hyperledger/peer
+      - peer1.ao.perchain.com:/var/hyperledger/production
+    depends_on:
+      - orderer.perchain.com
+      - couchdb1.ao.perchain.com
+
+  # 客户端节点
+  cli:
+    container_name: cli
+    image: hyperledger/fabric-tools:1.4.12
+    tty: true
+    environment:
+      # go 环境设置
+      - GO111MODULE=auto
+      - GOPROXY=https://goproxy.cn
+      - CORE_PEER_ID=cli
+    command: /bin/bash
+    volumes:
+      - ./config:/etc/hyperledger/config
+      - ./crypto-config/peerOrganizations/co.perchain.com/:/etc/hyperledger/peer/co.perchain.com
+      - ./crypto-config/peerOrganizations/so.perchain.com:/etc/hyperledger/peer/so.perchain.com
+      - ./crypto-config/peerOrganizations/ao.perchain.com:/etc/hyperledger/peer/ao.perchain.com
+      - ./../chaincode:/opt/gopath/src/chaincode # 链码路径注入
+    networks:
+      - perchain_network
+    depends_on:
+      - orderer.perchain.com
+      - peer0.co.perchain.com
+      - peer1.co.perchain.com
+      - peer0.so.perchain.com
+      - peer1.so.perchain.com
+      - peer0.ao.perchain.com
+      - peer1.ao.perchain.com
+

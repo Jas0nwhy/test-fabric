@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="c78d14ed-15f4-48f8-9765-ca7d601cb52e" name="10.9.0.221">
+        <fileTransfer rootFolder="/home/seu/go/src/perchain.com/test-fabric" accessType="SFTP" host="10.9.0.221" port="22" sshConfigId="7fb89229-6401-47f1-b915-bf7c64246432" sshConfig="seu@10.9.0.221:22 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+      <webServer id="004e9a08-2c38-49a1-b567-25333ab19841" name="10.9.0.222">
+        <fileTransfer rootFolder="/home/seu/go/src/transchain.com/test-fabric" accessType="SFTP" host="10.9.0.222" port="22" sshConfigId="7ad4347c-d033-46a8-98e1-02b4b5e45876" sshConfig="seu@10.9.0.222:22 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
